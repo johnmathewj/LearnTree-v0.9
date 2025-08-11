@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Gemini API client
-client = genai.Client(api_key="AIzaSyBc70X28NtqrbzEpkz6uKcbLfXgDZ1Sixs")
+client = genai.Client(api_key="YOUR_API_KEY")
 
 # Folder to store audio
 UPLOAD_FOLDER = "uploads"
@@ -109,3 +109,4 @@ def generate():
 if __name__ == "__main__":
     print("Flask server running at http://127.0.0.1:5000")
     app.run(debug=True)
+
