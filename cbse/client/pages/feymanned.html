@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feynman Assistant - LearnTree</title>
+    <link rel="stylesheet" href="../style.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0d1b2a;
+            color: #f8f9fa;
+        }
+
+        header.feynman-header h1 {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        /* Loader and spinner styles */
+        #loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin-top: 2rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #ccc;
+            border-top: 5px solid #20c997;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #result {
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: #10263f;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 255, 200, 0.2);
+            text-align: center;
+        }
+
+        audio {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="feynman-header">
+        <a href="javascript:history.back()" class="back-arrow" title="Go back"></a>
+        <h1 class="logo" style="margin-left: 1rem; font-size: 24px;">LearnTree - Feynman Technique</h1>
+    </header>
+
+    <div id="loader">
+        <p id="loader-text">Loading explanation...</p>
+        <div class="spinner"></div>
+    </div>
+
+    <section id="result" class="feynman-result" style="display: none;">
+        <h2>Your Audio Explanation:</h2>
+        <audio id="audio-player" controls style="margin-top: 1rem;"></audio>
+    </section>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const payload = {
+            name: params.get("name") || "",
+            topic: params.get("topic") || "",
+            class: params.get("class") || "",
+            board: params.get("board") || ""
+        };
+
+        async function sendValue(data) {
+            const loader = document.getElementById("loader");
+            const resultDiv = document.getElementById("result");
+            const audioPlayer = document.getElementById("audio-player");
+            const loaderText = document.getElementById("loader-text");
+
+            const loadingMessages = [
+                "Implementing Feynman Technique...",
+                "Creating your audio explanation...",
+                "Hang tight, this will be worth it!"
+            ];
+
+            let msgIndex = 0;
+            const interval = setInterval(() => {
+                loaderText.textContent = loadingMessages[msgIndex % loadingMessages.length];
+                msgIndex++;
+            }, 2000);
+
+            try {
+                loader.style.display = "flex";
+                resultDiv.style.display = "none";
+
+                // Don't send if required params are missing
+                if (!data.name || !data.topic || !data.class || !data.board) {
+                    throw new Error("Missing required parameters.");
+                }
+
+                const response = await fetch("http://127.0.0.1:5000/generate_audio", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error("Failed to get audio.");
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                clearInterval(interval);
+                loader.style.display = "none";
+                resultDiv.style.display = "block";
+                audioPlayer.src = audioUrl;
+            } catch (error) {
+                clearInterval(interval);
+                loader.style.display = "none";
+                resultDiv.style.display = "block";
+                audioPlayer.outerHTML = "<p>❌ Error loading audio. Please try again.</p>";
+                console.error("Error:", error);
+            }
+        }
+
+        window.onload = () => {
+            sendValue(payload);
+        };
+    </script>
+
+</body>
+
+</html>
